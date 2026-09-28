@@ -24,30 +24,36 @@ int main() {
     std::vector<int> data = randomArray(count, maxValue);
 
     Player player;
-    player.load(algos[algoIndex].fn(data));
+    auto reload = [&]() { player.load(algos[algoIndex].fn(data)); };
+    reload();
 
     while (!WindowShouldClose()) {
-        if (IsKeyPressed(KEY_SPACE)) player.togglePlay();
-        if (IsKeyPressed(KEY_RIGHT)) player.stepForward();
-        if (IsKeyPressed(KEY_LEFT))  player.stepBack();
-        if (IsKeyPressed(KEY_UP))    player.stepsPerSecond = std::min(player.stepsPerSecond * 1.5f, 1000.0f);
-        if (IsKeyPressed(KEY_DOWN))  player.stepsPerSecond = std::max(player.stepsPerSecond / 1.5f, 1.0f);
-        if (IsKeyPressed(KEY_R)) {
-            data = randomArray(count, maxValue);
-            player.load(algos[algoIndex].fn(data));
-        }
-        if (IsKeyPressed(KEY_TAB)) {
-            algoIndex = (algoIndex + 1) % algos.size();
-            player.load(algos[algoIndex].fn(data));
-        }
-
         player.update(GetFrameTime());
 
         BeginDrawing();
         ClearBackground({18, 18, 24, 255});
-        drawUI(player, algos[algoIndex].name, algos[algoIndex].bigO);
-        drawBars(player.current(), {20, 90, (float)width - 40, (float)height - 140}, maxValue);
+        drawBars(player.current(), {20, 140, (float)width - 40, (float)height - 200}, maxValue);
+        UIActions ui = drawUI(player, algos, algoIndex);
         EndDrawing();
+
+        // Handle input (mouse buttons OR keyboard)
+        if (ui.togglePlay  || IsKeyPressed(KEY_SPACE)) player.togglePlay();
+        if (ui.stepForward || IsKeyPressed(KEY_RIGHT)) player.stepForward();
+        if (ui.stepBack    || IsKeyPressed(KEY_LEFT))  player.stepBack();
+        if (ui.faster      || IsKeyPressed(KEY_UP))    player.stepsPerSecond = std::min(player.stepsPerSecond * 1.5f, 1000.0f);
+        if (ui.slower      || IsKeyPressed(KEY_DOWN))  player.stepsPerSecond = std::max(player.stepsPerSecond / 1.5f, 1.0f);
+        if (ui.shuffle     || IsKeyPressed(KEY_R)) {
+            data = randomArray(count, maxValue);
+            reload();
+        }
+        if (IsKeyPressed(KEY_TAB)) {
+            algoIndex = (algoIndex + 1) % algos.size();
+            reload();
+        }
+        if (ui.selectAlgo >= 0 && (size_t)ui.selectAlgo != algoIndex) {
+            algoIndex = (size_t)ui.selectAlgo;
+            reload();
+        }
     }
 
     CloseWindow();
