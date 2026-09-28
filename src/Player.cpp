@@ -3,6 +3,13 @@
 
 void Player::load(std::vector<Step> s) {
     steps = std::move(s);
+    int comparisons = 0, swaps = 0;
+    for (auto& st : steps) {
+        if (st.cmpA != -1)  ++comparisons;
+        if (st.swapA != -1) ++swaps;
+        st.comparisons = comparisons;
+        st.swaps = swaps;
+    }
     index = 0;
     playing = false;
     timer = 0.0f;
